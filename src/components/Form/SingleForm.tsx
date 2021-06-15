@@ -1,15 +1,10 @@
-import React, {
-	ChangeEvent,
-	SyntheticEvent,
-	useCallback,
-	useEffect,
-	useState,
-} from 'react';
+import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { Button, Form, FormGroup, Input, Label } from 'reactstrap';
 import { useTypedSelector } from '../../hooks/useTypedSelector';
 import { Pane, Spinner } from 'evergreen-ui';
 import { FormTargetType } from '../../types';
 import { useActions } from '../../hooks/useActions';
+import { useForm } from '../../hooks/useForm';
 
 interface SingleFormProps {
 	target?: FormTargetType;
@@ -30,7 +25,7 @@ const SingleForm: React.FC<SingleFormProps> = ({
 }) => {
 	const [loading, setLoading] = useState(false);
 
-	const [name, setName] = useState('');
+	const [form, changeHandler, setForm] = useForm({ name: '' });
 
 	const { token } = useTypedSelector(({ auth }) => auth);
 	const { error } = useActions();
@@ -38,11 +33,11 @@ const SingleForm: React.FC<SingleFormProps> = ({
 	const loadInfo = useCallback(async () => {
 		try {
 			const res = await findOne(current!);
-			setName(res.data.name || res.data.title);
+			setForm((prev) => ({ ...prev, name: res.data.name || res.data.title }));
 		} catch ({ message }) {
 			error({ message });
 		}
-	}, [current, error, findOne]);
+	}, [current, error, findOne, setForm]);
 
 	const initState = useCallback(async () => {
 		if (target === FormTargetType.update) {
@@ -56,10 +51,10 @@ const SingleForm: React.FC<SingleFormProps> = ({
 		setLoading(true);
 		try {
 			if (target === FormTargetType.update) {
-				await update(current!, { name }, token!);
+				await update(current!, form, token!);
 			}
 			if (target === FormTargetType.create) {
-				await add({ name }, token!);
+				await add(form, token!);
 			}
 			setLoading(false);
 		} catch ({ message }) {
@@ -78,12 +73,7 @@ const SingleForm: React.FC<SingleFormProps> = ({
 				<>
 					<FormGroup>
 						<Label>Name</Label>
-						<Input
-							value={name}
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setName(event.target.value)
-							}
-						/>
+						<Input value={form.name} name="name" onChange={changeHandler} />
 					</FormGroup>
 				</>
 			)}

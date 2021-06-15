@@ -21,7 +21,7 @@ import {
 	ICategory,
 	ISub,
 	IColor,
-	Ibrand,
+	IBrand,
 } from '../types';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {
@@ -40,7 +40,7 @@ const ShopPage = () => {
 	const [allCategory, setAllCategory] = useState<ICategory[]>([]);
 	const [allSubs, setAllSubs] = useState<ISub[]>([]);
 	const [allColors, setAllColors] = useState<IColor[]>([]);
-	const [allBrands, setAllBrands] = useState<Ibrand[]>([]);
+	const [allBrands, setAllBrands] = useState<IBrand[]>([]);
 	const [category, setCategory] = useState(0);
 	const [sub, setSub] = useState(0);
 	const [color, setColor] = useState(0);
@@ -91,7 +91,7 @@ const ShopPage = () => {
 				order,
 				price_from,
 				price_to,
-				rating,
+				rating: rating ? rating: null,
 				new: newArrival ? 1 : null,
 				favorite: favorite ? 1 : null,
 				hot_deal: hot_deal ? 1 : null,

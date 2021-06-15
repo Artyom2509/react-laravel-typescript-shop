@@ -12,6 +12,7 @@ import { setFormData } from '../../utils/forms';
 import api from '../../api';
 import { FormTargetType } from '../../types';
 import { useActions } from '../../hooks/useActions';
+import { useForm } from '../../hooks/useForm';
 
 interface DeliveryFormProps {
 	target: FormTargetType;
@@ -21,9 +22,11 @@ interface DeliveryFormProps {
 const DeliveryForm: React.FC<DeliveryFormProps> = ({ target, id }) => {
 	const [loading, setLoading] = useState(false);
 
-	const [title, setTitle] = useState('');
-	const [description, setDescription] = useState('');
-	const [price, setPrice] = useState(0);
+	const [form, changeHandler, setForm] = useForm({
+		title: '',
+		description: '',
+		price: 0,
+	});
 	const [image, setImage] = useState();
 
 	const { token } = useTypedSelector(({ auth }) => auth);
@@ -32,13 +35,16 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({ target, id }) => {
 	const loadInfo = useCallback(async () => {
 		try {
 			const res = await api.currentDelivery(id);
-			setTitle(res.data.title);
-			setDescription(res.data.description);
-			setPrice(res.data.price);
+			setForm((prev) => ({ ...prev, title: res.data.title as string }));
+			setForm((prev) => ({
+				...prev,
+				description: res.data.description as string,
+			}));
+			setForm((prev) => ({ ...prev, price: res.data.price as number }));
 		} catch ({ message }) {
 			error({ message });
 		}
-	}, [id, error]);
+	}, [id, error, setForm]);
 
 	const initState = useCallback(async () => {
 		if (target === FormTargetType.update) {
@@ -53,11 +59,11 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({ target, id }) => {
 		setLoading(true);
 		try {
 			if (target === FormTargetType.update) {
-				formData = { title, description, price };
+				formData = form;
 				await api.updateDelivery(id, formData, token);
 			}
 			if (target === FormTargetType.create) {
-				formData = setFormData({ title, description, image, price });
+				formData = setFormData({ ...form, image });
 				await api.addDelivery(formData, token);
 			}
 			if (target === FormTargetType.image) {
@@ -101,30 +107,25 @@ const DeliveryForm: React.FC<DeliveryFormProps> = ({ target, id }) => {
 						</FormGroup>
 						<FormGroup>
 							<Label>Title</Label>
-							<Input
-								value={title}
-								onChange={(event: ChangeEvent<HTMLInputElement>) =>
-									setTitle(event.target.value)
-								}
-							/>
+							<Input value={form.title} name="title" onChange={changeHandler} />
 						</FormGroup>
 						<FormGroup>
 							<Label>Description</Label>
 							<Input
-								value={description}
+								value={form.description}
+								name="description"
 								type="textarea"
-								onChange={(event: ChangeEvent<HTMLInputElement>) =>
-									setDescription(event.target.value)
-								}
+								onChange={changeHandler}
 							/>
 						</FormGroup>
 						<FormGroup>
 							<Label>Price</Label>
 							<Input
-								value={price}
+								value={form.price}
+								name="price"
 								type="number"
-								onChange={(event: ChangeEvent<HTMLInputElement>) =>
-									setPrice(+event.target.value)
+								onChange={(e: ChangeEvent<HTMLInputElement>) =>
+									setForm((prev) => ({ ...prev, price: +e.target.value }))
 								}
 							/>
 						</FormGroup>

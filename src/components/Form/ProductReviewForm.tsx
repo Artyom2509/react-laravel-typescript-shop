@@ -1,9 +1,10 @@
-import React, { ChangeEvent, SyntheticEvent, useState } from 'react';
+import React, { SyntheticEvent, useState } from 'react';
 import { Button, Form, FormGroup, Input, Label } from 'reactstrap';
 import { Pane, Spinner } from 'evergreen-ui';
 import api from '../../api';
 import { useActions } from '../../hooks/useActions';
 import { Rating } from 'primereact/rating';
+import { useForm } from '../../hooks/useForm';
 
 interface Props {
 	id: number;
@@ -13,6 +14,12 @@ interface Props {
 const ProductReviewForm: React.FC<Props> = ({ id, className }) => {
 	const [loading, setLoading] = useState(false);
 
+	const [form, changeHandler, setForm] = useForm({
+		rating: 0,
+		name: '',
+		text: '',
+		email: '',
+	});
 	const [rating, setRating] = useState(0);
 	const [name, setName] = useState('');
 	const [text, setText] = useState('');
@@ -53,41 +60,32 @@ const ProductReviewForm: React.FC<Props> = ({ id, className }) => {
 			<div className="d-flex justify-content-between">
 				<FormGroup>
 					<Label>Name</Label>
-					<Input
-						value={name}
-						onChange={(event: ChangeEvent<HTMLInputElement>) =>
-							setName(event.target.value)
-						}
-					/>
+					<Input value={form.name} name="name" onChange={changeHandler} />
 				</FormGroup>
 				<FormGroup>
 					<Label>Email</Label>
-					<Input
-						value={email}
-						onChange={(event: ChangeEvent<HTMLInputElement>) =>
-							setEmail(event.target.value)
-						}
-					/>
+					<Input value={form.email} name="email" onChange={changeHandler} />
 				</FormGroup>
 			</div>
 
 			<FormGroup>
 				<Label>Text</Label>
 				<Input
-					value={text}
+					value={form.text}
+					name="text"
 					type="textarea"
-					onChange={(event: ChangeEvent<HTMLInputElement>) =>
-						setText(event.target.value)
-					}
+					onChange={changeHandler}
 				/>
 			</FormGroup>
 			<FormGroup>
 				<Label>Rating</Label>
 				<Rating
 					cancel={false}
-					value={+rating}
+					value={+form.rating}
 					stars={5}
-					onChange={(e) => setRating(+e.target.value)}
+					onChange={(e) =>
+						setForm((prev) => ({ ...prev, rating: +e.target.value }))
+					}
 				/>
 			</FormGroup>
 

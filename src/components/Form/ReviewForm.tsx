@@ -12,6 +12,7 @@ import api from '../../api';
 import { FormTargetType } from '../../types';
 import { useActions } from '../../hooks/useActions';
 import { Rating } from 'primereact/rating';
+import { useForm } from '../../hooks/useForm';
 
 interface ReviewFormProps {
 	target: FormTargetType;
@@ -21,12 +22,14 @@ interface ReviewFormProps {
 const ReviewForm: React.FC<ReviewFormProps> = ({ target, id }) => {
 	const [loading, setLoading] = useState(false);
 
-	const [rating, setRating] = useState(0);
-	const [product_id, setProduct_id] = useState(0);
-	const [name, setName] = useState('');
-	const [text, setText] = useState('');
-	const [email, setEmail] = useState('');
-	const [status, setStatus] = useState(false);
+	const [form, changeHandler, setForm] = useForm({
+		rating: 0,
+		product_id: 0,
+		name: '',
+		text: '',
+		email: '',
+		status: false,
+	});
 
 	const { token } = useTypedSelector(({ auth }) => auth);
 	const { error } = useActions();
@@ -34,16 +37,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ target, id }) => {
 	const loadInfo = useCallback(async () => {
 		try {
 			const res = await api.currentReview(id, token);
-			setProduct_id(res.data.product_id);
-			setName(res.data.name);
-			setEmail(res.data.email);
-			setText(res.data.text);
-			setRating(res.data.rating);
-			setStatus(res.data.status);
+			const { product_id, name, email, text, rating, status } = res.data;
+			setForm({ product_id, name, email, text, rating, status });
 		} catch ({ message }) {
 			error({ message });
 		}
-	}, [id, error, token]);
+	}, [id, error, token, setForm]);
 
 	const initState = useCallback(async () => {
 		if (target === FormTargetType.update) {
@@ -59,15 +58,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ target, id }) => {
 			if (target === FormTargetType.update) {
 				await api.updateReview(
 					id,
-					{ text, product_id, rating, name, email, status: status ? 1 : 0 },
+					{ ...form, status: form.status ? 1 : 0 },
 					token
 				);
 			}
 			if (target === FormTargetType.create) {
-				await api.addReview(
-					{ text, product_id, rating, name, email, status: status ? 1 : 0 },
-					token
-				);
+				await api.addReview({ ...form, status: form.status ? 1 : 0 }, token);
 			}
 			setLoading(false);
 		} catch ({ message }) {
@@ -88,57 +84,51 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ target, id }) => {
 						<FormGroup>
 							<Label>Product id</Label>
 							<Input
-								value={product_id}
+								value={form.product_id}
+								name="product_id"
 								type="number"
-								onChange={(event: ChangeEvent<HTMLInputElement>) =>
-									setProduct_id(+event.target.value)
+								onChange={(e: ChangeEvent<HTMLInputElement>) =>
+									setForm((prev) => ({ ...prev, product_id: +e.target.value }))
 								}
 							/>
 						</FormGroup>
 					}
 					<FormGroup>
 						<Label>Name</Label>
-						<Input
-							value={name}
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setName(event.target.value)
-							}
-						/>
+						<Input value={form.name} name="name" onChange={changeHandler} />
 					</FormGroup>
 					<FormGroup>
 						<Label>Email</Label>
-						<Input
-							value={email}
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setEmail(event.target.value)
-							}
-						/>
+						<Input value={form.email} name="email" onChange={changeHandler} />
 					</FormGroup>
 					<FormGroup>
 						<Label>Text</Label>
 						<Input
-							value={text}
+							value={form.text}
+							name="text"
 							type="textarea"
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setText(event.target.value)
-							}
+							onChange={changeHandler}
 						/>
 					</FormGroup>
 					<FormGroup>
 						<Label>Rating</Label>
 						<Rating
 							cancel={false}
-							value={+rating}
+							value={+form.rating}
 							stars={5}
-							onChange={(e) => setRating(+e.target.value)}
+							onChange={(e) =>
+								setForm((prev) => ({ ...prev, rating: +e.target.value }))
+							}
 						/>
 					</FormGroup>
 					<FormGroup check>
 						<Label check>
 							<Input
 								type="checkbox"
-								checked={status}
-								onChange={() => setStatus((prev) => !prev)}
+								checked={form.status}
+								onChange={() =>
+									setForm((prev) => ({ ...prev, status: !prev.status }))
+								}
 							/>{' '}
 							Accept
 						</Label>
@@ -158,7 +148,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ target, id }) => {
 						size="lg"
 						className="bg-gradient-theme-left border-0"
 						block
-						disabled={product_id <= 0}
+						disabled={form.product_id <= 0}
 						onClick={handleSubmit}>
 						Save review
 					</Button>

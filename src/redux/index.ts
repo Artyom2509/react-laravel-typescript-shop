@@ -5,9 +5,8 @@ import createSagaMiddleware from 'redux-saga';
 import rootSaga from './saga';
 
 // eslint-disable-next-line import/no-anonymous-default-export
-export default () => {
+export const getStore =  () => {
 	const sagaMiddleware = createSagaMiddleware();
-
 	const middlewares = [sagaMiddleware];
 
 	const store = createStore(
