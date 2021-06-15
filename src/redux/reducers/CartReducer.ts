@@ -71,7 +71,7 @@ const Cart = (state: State = initialState, action: Actions) => {
 const setProductCount = (
 	products: Array<ProductInCart>,
 	id: number,
-	type: string
+	type: 'INC' | 'DEC'
 ) => {
 	const idx = products.findIndex((p) => p.id === id);
 

@@ -42,7 +42,7 @@ export interface IProduct {
 	favorite: string;
 	hot_deal: string;
 	images: IPicture[];
-	brand: Ibrand;
+	brand: IBrand;
 	created_at: string;
 	updated_at: string;
 }
@@ -83,7 +83,7 @@ export interface IReview {
 	updated_at: string;
 }
 
-export interface Ibrand {
+export interface IBrand {
 	id: number;
 	name: string;
 	logo: string;

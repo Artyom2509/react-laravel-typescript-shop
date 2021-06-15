@@ -13,7 +13,7 @@ import api from '../../api';
 import {
 	ColorsTypes,
 	FormTargetType,
-	Ibrand,
+	IBrand,
 	ICategory,
 	IColor,
 	IPicture,
@@ -31,7 +31,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ target, productId }) => {
 	const [allCategory, setAllCategory] = useState<ICategory[]>([]);
 	const [allSubs, setAllSubs] = useState<ISub[]>([]);
 	const [allColors, setAllColors] = useState<IColor[]>([]);
-	const [allBrands, setAllBrands] = useState<Ibrand[]>([]);
+	const [allBrands, setAllBrands] = useState<IBrand[]>([]);
 	const [allImages, setAllImages] = useState<IPicture[]>([]);
 
 	const [title, setTitle] = useState('');

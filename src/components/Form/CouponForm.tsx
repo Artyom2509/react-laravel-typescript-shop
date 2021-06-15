@@ -1,28 +1,26 @@
-import React, {
-	ChangeEvent,
-	SyntheticEvent,
-	useCallback,
-	useEffect,
-	useState,
-} from 'react';
+import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { Button, Form, FormGroup, Input, Label } from 'reactstrap';
 import { useTypedSelector } from '../../hooks/useTypedSelector';
 import { Pane, Spinner } from 'evergreen-ui';
 import api from '../../api';
 import { FormTargetType } from '../../types';
 import { useActions } from '../../hooks/useActions';
+import { useForm } from '../../hooks/useForm';
 
 interface CouponFormProps {
-	target: FormTargetType;
 	id?: number;
+	target: FormTargetType;
 }
 
 const CouponForm: React.FC<CouponFormProps> = ({ target, id }) => {
 	const [loading, setLoading] = useState(false);
 
-	const [value, setValue] = useState(0);
-	const [code, setCode] = useState('');
-	const [is_enabled, setIs_enabled] = useState(false);
+	const [form, changeHandler, setForm] = useForm({
+		value: '0',
+		code: '',
+		is_enabled: false,
+	});
+	console.log('form', form);
 
 	const { token } = useTypedSelector(({ auth }) => auth);
 	const { error } = useActions();
@@ -30,13 +28,14 @@ const CouponForm: React.FC<CouponFormProps> = ({ target, id }) => {
 	const loadInfo = useCallback(async () => {
 		try {
 			const res = await api.currentCoupon(id, token);
-			setCode(res.data.code);
-			setValue(res.data.value);
-			setIs_enabled(res.data.is_enabled);
+			console.log('loadInfo -> res', res);
+			setForm((prev) => ({ ...prev, code: res.data.code as string }));
+			setForm((prev) => ({ ...prev, value: res.data.value as string }));
+			setForm((prev) => ({ ...prev, is_enabled: res.data.is_enabled }));
 		} catch ({ message }) {
 			error({ message });
 		}
-	}, [id, error, token]);
+	}, [id, error, token, setForm]);
 
 	const initState = useCallback(async () => {
 		if (target === FormTargetType.update) {
@@ -52,13 +51,13 @@ const CouponForm: React.FC<CouponFormProps> = ({ target, id }) => {
 			if (target === FormTargetType.update) {
 				await api.updateCoupon(
 					id,
-					{ value, code, is_enabled: is_enabled ? 1 : 0 },
+					{ ...form, is_enabled: form.is_enabled ? 1 : 0 },
 					token
 				);
 			}
 			if (target === FormTargetType.create) {
 				await api.addCoupon(
-					{ value, code, is_enabled: is_enabled ? 1 : 0 },
+					{ ...form, is_enabled: form.is_enabled ? 1 : 0 },
 					token
 				);
 			}
@@ -79,32 +78,29 @@ const CouponForm: React.FC<CouponFormProps> = ({ target, id }) => {
 				<>
 					<FormGroup>
 						<Label>Code</Label>
-						<Input
-							value={code}
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setCode(event.target.value)
-							}
-						/>
+						<Input name="code" value={form.code} onChange={changeHandler} />
 					</FormGroup>
 					<FormGroup>
 						<Label>Value</Label>
 						<Input
-							value={value}
+							name="value"
+							value={form.value}
 							min={0}
 							max={1}
 							step="0.01"
 							type="number"
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setValue(+event.target.value)
-							}
+							onChange={changeHandler}
 						/>
 					</FormGroup>
 					<FormGroup check>
 						<Label check>
 							<Input
 								type="checkbox"
-								checked={is_enabled}
-								onChange={() => setIs_enabled((prev) => !prev)}
+								checked={form.is_enabled}
+								name="is_enabled"
+								onChange={() =>
+									setForm((prev) => ({ ...prev, is_enabled: !prev.is_enabled }))
+								}
 							/>{' '}
 							Enabled
 						</Label>

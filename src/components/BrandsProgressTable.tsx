@@ -1,5 +1,5 @@
 import { Table } from 'reactstrap';
-import { ColorsTypes, FormTargetType, Ibrand } from '../types';
+import { ColorsTypes, FormTargetType, IBrand } from '../types';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { Button } from 'reactstrap';
 import { Modal, ModalBody, ModalHeader } from 'reactstrap';
@@ -22,7 +22,7 @@ const BrandsProgressTable: React.FC<BrandsProgressTableProps> = ({
 	const [modal, setModal] = useState(false);
 	const [target, setTarget] = useState(FormTargetType.update);
 	const [current, setCurrent] = useState<number | undefined>();
-	const [data, setData] = useState<Ibrand[]>([]);
+	const [data, setData] = useState<IBrand[]>([]);
 
 	const token = useTypedSelector(({ auth }) => auth.token);
 	const { error } = useActions();

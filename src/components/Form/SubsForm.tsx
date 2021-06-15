@@ -11,6 +11,7 @@ import { Pane, Spinner } from 'evergreen-ui';
 import { FormTargetType, ICategory } from '../../types';
 import { useActions } from '../../hooks/useActions';
 import api from '../../api';
+import { useForm } from '../../hooks/useForm';
 
 interface SubsFormProps {
 	target?: FormTargetType;
@@ -21,8 +22,7 @@ const SubsForm: React.FC<SubsFormProps> = ({ target, current }) => {
 	const [loading, setLoading] = useState(false);
 	const [categories, setCategories] = useState<ICategory[]>([]);
 
-	const [name, setName] = useState('');
-	const [category_id, setCategory_id] = useState(0);
+	const [form, changeHandler, setForm] = useForm({ name: '', category_id: 0 });
 
 	const { token } = useTypedSelector(({ auth }) => auth);
 	const { error } = useActions();
@@ -30,12 +30,12 @@ const SubsForm: React.FC<SubsFormProps> = ({ target, current }) => {
 	const loadSub = useCallback(async () => {
 		try {
 			const res = await api.currentSub(current!);
-			setCategory_id(res.data.category_id);
-			setName(res.data.name);
+			const { category_id, name } = res.data;
+			setForm({ category_id, name });
 		} catch ({ message }) {
 			error({ message });
 		}
-	}, [current, error]);
+	}, [current, error, setForm]);
 
 	const loadCategory = useCallback(async () => {
 		try {
@@ -62,10 +62,10 @@ const SubsForm: React.FC<SubsFormProps> = ({ target, current }) => {
 		setLoading(true);
 		try {
 			if (target === FormTargetType.update) {
-				await api.updateSub(current!, { category_id, name }, token!);
+				await api.updateSub(current!, form, token!);
 			}
 			if (target === FormTargetType.create) {
-				await api.addSub({ category_id, name }, token!);
+				await api.addSub(form, token!);
 			}
 			setLoading(false);
 		} catch ({ message }) {
@@ -85,10 +85,13 @@ const SubsForm: React.FC<SubsFormProps> = ({ target, current }) => {
 					<FormGroup>
 						<Label>Category</Label>
 						<Input
-							value={category_id}
+							value={form.category_id}
 							type="select"
 							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setCategory_id(+event.target.value)
+								setForm((prev) => ({
+									...prev,
+									category_id: +event.target.value,
+								}))
 							}>
 							<option value={0} disabled>
 								Select category
@@ -103,11 +106,10 @@ const SubsForm: React.FC<SubsFormProps> = ({ target, current }) => {
 					<FormGroup>
 						<Label>Name</Label>
 						<Input
-							value={name}
-							disabled={category_id === 0}
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setName(event.target.value)
-							}
+							value={form.name}
+							name="name"
+							disabled={form.category_id === 0}
+							onChange={changeHandler}
 						/>
 					</FormGroup>
 				</>
@@ -125,7 +127,7 @@ const SubsForm: React.FC<SubsFormProps> = ({ target, current }) => {
 						size="lg"
 						className="bg-gradient-theme-left border-0"
 						block
-						disabled={category_id === 0}
+						disabled={form.category_id === 0}
 						onClick={handleSubmit}>
 						Save Subs
 					</Button>

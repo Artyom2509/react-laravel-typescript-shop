@@ -1,10 +1,4 @@
-import React, {
-	ChangeEvent,
-	SyntheticEvent,
-	useCallback,
-	useEffect,
-	useState,
-} from 'react';
+import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { Button, Form, FormGroup, Input, Label } from 'reactstrap';
 import { useTypedSelector } from '../../hooks/useTypedSelector';
 import { Pane, Spinner } from 'evergreen-ui';
@@ -12,17 +6,25 @@ import { setFormData } from '../../utils/forms';
 import api from '../../api';
 import { FormTargetType } from '../../types';
 import { useActions } from '../../hooks/useActions';
+import { useForm } from '../../hooks/useForm';
 
 interface BrandFormProps {
 	target: FormTargetType;
 	id?: number;
 }
 
+interface IUseForm {
+	name: string;
+	description: string;
+}
+
 const BrandForm: React.FC<BrandFormProps> = ({ target, id }) => {
 	const [loading, setLoading] = useState(false);
 
-	const [name, setName] = useState('');
-	const [description, setDescription] = useState('');
+	const [form, changeHandler, setForm] = useForm<IUseForm>({
+		name: '',
+		description: '',
+	});
 	const [image, setImage] = useState();
 
 	const { token } = useTypedSelector(({ auth }) => auth);
@@ -31,12 +33,12 @@ const BrandForm: React.FC<BrandFormProps> = ({ target, id }) => {
 	const loadInfo = useCallback(async () => {
 		try {
 			const res = await api.currentBrand(id);
-			setName(res.data.name);
-			setDescription(res.data.description);
+			setForm((prev) => ({ ...prev, name: res.data.name }));
+			setForm((prev) => ({ ...prev, description: res.data.description }));
 		} catch ({ message }) {
 			error({ message });
 		}
-	}, [id, error]);
+	}, [id, error, setForm]);
 
 	const initState = useCallback(async () => {
 		if (target === FormTargetType.update) {
@@ -51,11 +53,11 @@ const BrandForm: React.FC<BrandFormProps> = ({ target, id }) => {
 		setLoading(true);
 		try {
 			if (target === FormTargetType.update) {
-				formData = { name, description };
+				formData = form;
 				await api.updateBrand(id, formData, token);
 			}
 			if (target === FormTargetType.create) {
-				formData = setFormData({ name, description, image });
+				formData = setFormData({ ...form, image });
 				await api.addBrand(formData, token);
 			}
 			if (target === FormTargetType.image) {
@@ -99,21 +101,14 @@ const BrandForm: React.FC<BrandFormProps> = ({ target, id }) => {
 						</FormGroup>
 						<FormGroup>
 							<Label>Name</Label>
-							<Input
-								value={name}
-								onChange={(event: ChangeEvent<HTMLInputElement>) =>
-									setName(event.target.value)
-								}
-							/>
+							<Input name="name" onChange={changeHandler} />
 						</FormGroup>
 						<FormGroup>
 							<Label>Description</Label>
 							<Input
-								value={description}
+								value="description"
 								type="textarea"
-								onChange={(event: ChangeEvent<HTMLInputElement>) =>
-									setDescription(event.target.value)
-								}
+								onChange={changeHandler}
 							/>
 						</FormGroup>
 					</>

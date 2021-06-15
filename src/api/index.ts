@@ -10,7 +10,6 @@ import * as Coupons from './functions/Coupons';
 import * as Payment from './functions/Payment';
 import * as Reviews from './functions/Reviews';
 import * as Status from './functions/Status';
-export * from './functions/User';
 
 export type Api = { [key: string]: any };
 

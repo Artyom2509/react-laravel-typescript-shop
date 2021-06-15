@@ -1,16 +1,11 @@
-import React, {
-	ChangeEvent,
-	SyntheticEvent,
-	useCallback,
-	useEffect,
-	useState,
-} from 'react';
+import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { Button, Form, FormGroup, Input, Label } from 'reactstrap';
 import { useTypedSelector } from '../../hooks/useTypedSelector';
 import { Pane, Spinner } from 'evergreen-ui';
 import api from '../../api';
 import { FormTargetType } from '../../types';
 import { useActions } from '../../hooks/useActions';
+import { useForm } from '../../hooks/useForm';
 
 interface ColorFormProps {
 	target: FormTargetType;
@@ -20,8 +15,7 @@ interface ColorFormProps {
 const ColorForm: React.FC<ColorFormProps> = ({ target, id }) => {
 	const [loading, setLoading] = useState(false);
 
-	const [name, setName] = useState('');
-	const [code, setCode] = useState('#000000');
+	const [form, changeHandler, setForm] = useForm({ name: '', code: '#000000' });
 
 	const { token } = useTypedSelector(({ auth }) => auth);
 	const { error } = useActions();
@@ -29,12 +23,12 @@ const ColorForm: React.FC<ColorFormProps> = ({ target, id }) => {
 	const loadInfo = useCallback(async () => {
 		try {
 			const res = await api.currentColor(id);
-			setName(res.data.name);
-			setCode(res.data.code);
+			setForm((prev) => ({ ...prev, name: res.data.name }));
+			setForm((prev) => ({ ...prev, code: res.data.code }));
 		} catch ({ message }) {
 			error({ message });
 		}
-	}, [id, error]);
+	}, [id, error, setForm]);
 
 	const initState = useCallback(async () => {
 		if (target === FormTargetType.update) {
@@ -48,10 +42,10 @@ const ColorForm: React.FC<ColorFormProps> = ({ target, id }) => {
 		setLoading(true);
 		try {
 			if (target === FormTargetType.update) {
-				await api.updateColor(id, { name, code }, token);
+				await api.updateColor(id, form, token);
 			}
 			if (target === FormTargetType.create) {
-				await api.addColor({ name, code }, token);
+				await api.addColor(form, token);
 			}
 			setLoading(false);
 		} catch ({ message }) {
@@ -70,21 +64,15 @@ const ColorForm: React.FC<ColorFormProps> = ({ target, id }) => {
 				<>
 					<FormGroup>
 						<Label>Name</Label>
-						<Input
-							value={name}
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setName(event.target.value)
-							}
-						/>
+						<Input name="name" value={form.name} onChange={changeHandler} />
 					</FormGroup>
 					<FormGroup>
 						<Label>Code</Label>
 						<Input
-							value={code}
+							name="code"
+							value={form.code}
 							type="color"
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setCode(event.target.value)
-							}
+							onChange={changeHandler}
 						/>
 					</FormGroup>
 				</>

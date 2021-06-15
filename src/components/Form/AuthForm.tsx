@@ -1,5 +1,5 @@
 import logo from '../../assets/img/logo/logo-2.png';
-import React, { ChangeEvent, SyntheticEvent, useMemo, useState } from 'react';
+import React, { SyntheticEvent, useMemo, useState } from 'react';
 import { Button, Form, FormGroup, Input, Label } from 'reactstrap';
 import { AuthStateType, AuthType } from '../../types';
 import { useActions } from '../../hooks/useActions';
@@ -7,6 +7,7 @@ import { useTypedSelector } from '../../hooks/useTypedSelector';
 import { Pane, Spinner } from 'evergreen-ui';
 import { setFormData } from '../../utils/forms';
 import { Redirect } from 'react-router';
+import { useForm } from '../../hooks/useForm';
 
 interface AuthFormProps {
 	authState: AuthStateType;
@@ -30,12 +31,22 @@ interface AuthFormProps {
 	onChangeAuthState: (authState: AuthStateType) => void;
 }
 
+interface IUseForm {
+	first_name: string;
+	last_name: string;
+	email: string;
+	password: string;
+	password_confirm: string;
+}
+
 const AuthForm: React.FC<AuthFormProps> = (props) => {
-	const [first_name, setFirst_name] = useState('');
-	const [last_name, setLast_name] = useState('');
-	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
-	const [password_confirm, setPassword_confirm] = useState('');
+	const [form, changeHandler] = useForm<IUseForm>({
+		first_name: '',
+		last_name: '',
+		email: '',
+		password: '',
+		password_confirm: '',
+	});
 	const [avatar, setAvatar] = useState<any>(null);
 
 	const { loading, token, user } = useTypedSelector(({ auth }) => auth);
@@ -49,29 +60,21 @@ const AuthForm: React.FC<AuthFormProps> = (props) => {
 		return props.authState === AuthType.STATE_SIGNUP;
 	}, [props.authState]);
 
-	const changeAuthState = (authState: AuthStateType) => (
-		event: SyntheticEvent
-	) => {
-		event.preventDefault();
+	const changeAuthState =
+		(authState: AuthStateType) => (event: SyntheticEvent) => {
+			event.preventDefault();
 
-		props.onChangeAuthState(authState);
-	};
+			props.onChangeAuthState(authState);
+		};
 
 	const handleSubmit = (event: SyntheticEvent) => {
 		event.preventDefault();
-		const data = {
-			first_name,
-			last_name,
-			password_confirm,
-			email,
-			avatar,
-			password,
-		};
+		const { email, password } = form;
 
 		if (isLogin) loginUser({ email, password });
 
 		if (isSignup) {
-			const formData = setFormData(data);
+			const formData = setFormData(form);
 			registerUser(formData);
 		}
 	};
@@ -138,42 +141,30 @@ const AuthForm: React.FC<AuthFormProps> = (props) => {
 						<Label for={lastNameLabel}>{lastNameLabel}</Label>
 						<Input
 							{...lastNameInputProps}
-							value={last_name}
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setLast_name(event.target.value)
-							}
+							name="last_name"
+							onChange={changeHandler}
 						/>
 					</FormGroup>
 					<FormGroup>
 						<Label for={firstNameLabel}>{firstNameLabel}</Label>
 						<Input
 							{...firstNameInputProps}
-							value={first_name}
-							onChange={(event: ChangeEvent<HTMLInputElement>) =>
-								setFirst_name(event.target.value)
-							}
+							name="first_name"
+							onChange={changeHandler}
 						/>
 					</FormGroup>
 				</>
 			)}
 			<FormGroup>
 				<Label for={emailLabel}>{emailLabel}</Label>
-				<Input
-					{...emailInputProps}
-					value={email}
-					onChange={(event: ChangeEvent<HTMLInputElement>) =>
-						setEmail(event.target.value)
-					}
-				/>
+				<Input {...emailInputProps} name="email" onChange={changeHandler} />
 			</FormGroup>
 			<FormGroup>
 				<Label for={passwordLabel}>{passwordLabel}</Label>
 				<Input
 					{...passwordInputProps}
-					value={password}
-					onChange={(event: ChangeEvent<HTMLInputElement>) =>
-						setPassword(event.target.value)
-					}
+					name="password"
+					onChange={changeHandler}
 				/>
 			</FormGroup>
 			{isSignup && (
@@ -181,10 +172,8 @@ const AuthForm: React.FC<AuthFormProps> = (props) => {
 					<Label for={confirmPasswordLabel}>{confirmPasswordLabel}</Label>
 					<Input
 						{...confirmPasswordInputProps}
-						value={password_confirm}
-						onChange={(event: ChangeEvent<HTMLInputElement>) =>
-							setPassword_confirm(event.target.value)
-						}
+						name="password_confirm"
+						onChange={changeHandler}
 					/>
 				</FormGroup>
 			)}

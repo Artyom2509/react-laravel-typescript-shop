@@ -12,6 +12,7 @@ import { setFormData } from '../../utils/forms';
 import api from '../../api';
 import { FormTargetType } from '../../types';
 import { useActions } from '../../hooks/useActions';
+import { useForm } from '../../hooks/useForm';
 
 interface PaymentFormProps {
 	target: FormTargetType;
@@ -21,9 +22,11 @@ interface PaymentFormProps {
 const PaymentForm: React.FC<PaymentFormProps> = ({ target, id }) => {
 	const [loading, setLoading] = useState(false);
 
-	const [title, setTitle] = useState('');
-	const [description, setDescription] = useState('');
-	const [value, setValue] = useState(0);
+	const [form, changeHandler, setForm] = useForm({
+		title: '',
+		description: '',
+		value: 0,
+	});
 	const [image, setImage] = useState();
 
 	const { token } = useTypedSelector(({ auth }) => auth);
@@ -32,13 +35,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ target, id }) => {
 	const loadInfo = useCallback(async () => {
 		try {
 			const res = await api.currentPayment(id);
-			setTitle(res.data.title);
-			setDescription(res.data.description);
-			setValue(res.data.value);
+			setForm((prev) => ({ ...prev, title: res.data.title }));
+			setForm((prev) => ({ ...prev, description: res.data.description }));
+			setForm((prev) => ({ ...prev, value: +res.data.value }));
 		} catch ({ message }) {
 			error({ message });
 		}
-	}, [id, error]);
+	}, [id, error, setForm]);
 
 	const initState = useCallback(async () => {
 		if (target === FormTargetType.update) {
@@ -53,11 +56,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ target, id }) => {
 		setLoading(true);
 		try {
 			if (target === FormTargetType.update) {
-				formData = { title, description, image, value };
+				formData = setFormData({ ...form, image });
 				await api.updatePayment(id, formData, token);
 			}
 			if (target === FormTargetType.create) {
-				formData = setFormData({ title, description, image, value });
+				formData = setFormData({ ...form, image });
 				await api.addPayment(formData, token);
 			}
 			if (target === FormTargetType.image) {
@@ -101,30 +104,25 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ target, id }) => {
 						</FormGroup>
 						<FormGroup>
 							<Label>Title</Label>
-							<Input
-								value={title}
-								onChange={(event: ChangeEvent<HTMLInputElement>) =>
-									setTitle(event.target.value)
-								}
-							/>
+							<Input value={form.title} name="title" onChange={changeHandler} />
 						</FormGroup>
 						<FormGroup>
 							<Label>Description</Label>
 							<Input
-								value={description}
+								value={form.description}
+								name="description"
 								type="textarea"
-								onChange={(event: ChangeEvent<HTMLInputElement>) =>
-									setDescription(event.target.value)
-								}
+								onChange={changeHandler}
 							/>
 						</FormGroup>
 						<FormGroup>
 							<Label>Value</Label>
 							<Input
-								value={value}
+								value={form.value}
+								name="value"
 								type="number"
-								onChange={(event: ChangeEvent<HTMLInputElement>) =>
-									setValue(+event.target.value)
+								onChange={(e: ChangeEvent<HTMLInputElement>) =>
+									setForm((prev) => ({ ...prev, value: +e.target.value }))
 								}
 							/>
 						</FormGroup>
